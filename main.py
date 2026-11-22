@@ -1,3 +1,6 @@
+# Banker's Algorithm
+# Main program
+
 def read_positive_integer(prompt):
     while True:
         try:
