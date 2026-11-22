@@ -29,9 +29,9 @@ def read_resource_vector(prompt, count):
 
             if any(value < 0 for value in values):
                 print("Resource amounts cannot be negative.")
+                continue
 
-            else:
-                return values
+            return values
 
         except ValueError:
             print("Enter whole numbers separated by spaces or commas.")
@@ -51,6 +51,20 @@ def read_matrix(title, processes, resources):
         matrix.append(row)
 
     return matrix
+
+
+def calculate_need(maximum, allocation):
+    need = []
+
+    for i in range(len(maximum)):
+        row = []
+
+        for j in range(len(maximum[i])):
+            row.append(maximum[i][j] - allocation[i][j])
+
+        need.append(row)
+
+    return need
 
 
 def display_matrix(title, matrix, processes, resources):
@@ -91,41 +105,34 @@ def main():
         name = input(
             f"Enter name for resource {i + 1} [{default_name}]: "
         ).strip()
+
         resources.append(name or default_name)
 
-    print("\nEnter the total amount of each resource.")
     total_resources = read_resource_vector(
         f"Total vector ({', '.join(resources)}): ",
         resource_count
     )
 
-    allocation = read_matrix(
-        "Allocation",
-        processes,
-        resources
-    )
+    allocation = read_matrix("Allocation", processes, resources)
+    maximum = read_matrix("Maximum Claim (Max)", processes, resources)
 
-    maximum = read_matrix(
-        "Maximum Claim (Max)",
-        processes,
-        resources
-    )
+    # Validate that allocation does not exceed maximum claim.
+    for i in range(process_count):
+        for j in range(resource_count):
+            if allocation[i][j] > maximum[i][j]:
+                print(
+                    f"Error: Allocation for {processes[i]} "
+                    f"exceeds its maximum claim for {resources[j]}."
+                )
+                return
+
+    need = calculate_need(maximum, allocation)
 
     print("\nTotal Resources:", total_resources)
 
-    display_matrix(
-        "ALLOCATION MATRIX",
-        allocation,
-        processes,
-        resources
-    )
-
-    display_matrix(
-        "MAXIMUM CLAIM MATRIX",
-        maximum,
-        processes,
-        resources
-    )
+    display_matrix("ALLOCATION MATRIX", allocation, processes, resources)
+    display_matrix("MAXIMUM CLAIM MATRIX", maximum, processes, resources)
+    display_matrix("NEED MATRIX (Max - Allocation)", need, processes, resources)
 
 
 if _name_ == "_main_":
