@@ -1,3 +1,7 @@
+
+# Banker's Algorithm
+# Deadlock Avoidance System
+
 def read_positive_integer(prompt):
     while True:
         try:
@@ -38,9 +42,7 @@ def read_matrix(title, processes, resources):
     print("Resource order:", ", ".join(resources))
 
     for process in processes:
-        matrix.append(
-            read_vector(f"{process}: ", len(resources))
-        )
+        matrix.append(read_vector(f"{process}: ", len(resources)))
 
     return matrix
 
@@ -111,6 +113,7 @@ def safety_check(allocation, need, available, processes, resources):
             ):
                 print(f"\n{process} can finish.")
 
+                # Release the resources held by the completed process.
                 work = [
                     work[j] + allocation[i][j]
                     for j in range(len(resources))
@@ -142,6 +145,67 @@ def safety_check(allocation, need, available, processes, resources):
     return False
 
 
+def check_resource_request(
+    process_index, request, allocation, need,
+    available, processes, resources
+):
+    process = processes[process_index]
+
+    print(f"\n========== REQUEST CHECK FOR {process} ==========")
+
+    # Rule 1: Request must not exceed the process's remaining Need.
+    if any(
+        request[j] > need[process_index][j]
+        for j in range(len(resources))
+    ):
+        print("Request denied: it exceeds the process's remaining Need.")
+        return
+
+    print("Check 1 passed: Request does not exceed Need.")
+
+    # Rule 2: Request must not exceed currently Available resources.
+    if any(
+        request[j] > available[j]
+        for j in range(len(resources))
+    ):
+        print("Request cannot be granted now: insufficient resources.")
+        return
+
+    print("Check 2 passed: Requested resources are Available.")
+
+    # Save the current state in case the request must be rejected.
+    old_available = available.copy()
+    old_allocation = [row.copy() for row in allocation]
+    old_need = [row.copy() for row in need]
+
+    # Temporarily grant the request.
+    for j in range(len(resources)):
+        available[j] -= request[j]
+        allocation[process_index][j] += request[j]
+        need[process_index][j] -= request[j]
+
+    print("\nChecking safety after temporary allocation...")
+
+    is_safe = safety_check(
+        allocation, need, available, processes, resources
+    )
+
+    if is_safe:
+        print(f"\nREQUEST APPROVED for {process}.")
+        print("The tentative allocation is retained.")
+    else:
+        # Roll back the temporary allocation.
+        available[:] = old_available
+
+        for i in range(len(processes)):
+            allocation[i][:] = old_allocation[i]
+            need[i][:] = old_need[i]
+
+        print(f"\nREQUEST DENIED for {process}.")
+        print("The resulting state would be unsafe.")
+        print("Original resource values have been restored.")
+
+
 def main():
     print("=" * 40)
     print("       BANKER'S ALGORITHM")
@@ -169,6 +233,7 @@ def main():
     allocation = read_matrix("Allocation", processes, resources)
     maximum = read_matrix("Maximum Claim (Max)", processes, resources)
 
+    # Check that Allocation does not exceed Max.
     for i in range(process_count):
         for j in range(resource_count):
             if allocation[i][j] > maximum[i][j]:
@@ -194,8 +259,44 @@ def main():
     display_matrix("MAXIMUM CLAIM MATRIX", maximum, processes, resources)
     display_matrix("NEED MATRIX", need, processes, resources)
 
-    safety_check(allocation, need, available, processes, resources)
+    initial_safe = safety_check(
+        allocation, need, available, processes, resources
+    )
+
+    if not initial_safe:
+        print("\nRequest checking requires an initially safe state.")
+        return
+
+    answer = input(
+        "\nCheck an additional resource request? (yes/no): "
+    ).strip().lower()
+
+    if answer not in ("yes", "y"):
+        print("Program finished.")
+        return
+
+    process_index = read_positive_integer(
+        f"Enter process number (1 to {process_count}) for the request: ",
+        minimum=1
+    ) - 1
+
+    if process_index >= process_count:
+        print("Invalid process number.")
+        return
+
+    request = read_vector(
+        f"Request vector for {processes[process_index]} "
+        f"({', '.join(resources)}): ",
+        resource_count
+    )
+
+    check_resource_request(
+        process_index, request, allocation, need,
+        available, processes, resources
+    )
+
+    print("\nProgram finished.")
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
