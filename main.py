@@ -54,17 +54,34 @@ def read_matrix(title, processes, resources):
 
 
 def calculate_need(maximum, allocation):
-    need = []
+    return [
+        [
+            maximum[i][j] - allocation[i][j]
+            for j in range(len(maximum[i]))
+        ]
+        for i in range(len(maximum))
+    ]
 
-    for i in range(len(maximum)):
-        row = []
 
-        for j in range(len(maximum[i])):
-            row.append(maximum[i][j] - allocation[i][j])
+def calculate_available(total, allocation):
+    allocated_totals = [
+        sum(row[j] for row in allocation)
+        for j in range(len(total))
+    ]
 
-        need.append(row)
+    available = [
+        total[j] - allocated_totals[j]
+        for j in range(len(total))
+    ]
 
-    return need
+    return allocated_totals, available
+
+
+def display_vector(title, values, resources):
+    print(f"\n{title}")
+
+    for resource, value in zip(resources, values):
+        print(f"{resource}: {value}")
 
 
 def display_matrix(title, matrix, processes, resources):
@@ -105,18 +122,16 @@ def main():
         name = input(
             f"Enter name for resource {i + 1} [{default_name}]: "
         ).strip()
-
         resources.append(name or default_name)
 
-    total_resources = read_resource_vector(
-        f"Total vector ({', '.join(resources)}): ",
+    total = read_resource_vector(
+        f"Total resources ({', '.join(resources)}): ",
         resource_count
     )
 
     allocation = read_matrix("Allocation", processes, resources)
     maximum = read_matrix("Maximum Claim (Max)", processes, resources)
 
-    # Validate that allocation does not exceed maximum claim.
     for i in range(process_count):
         for j in range(resource_count):
             if allocation[i][j] > maximum[i][j]:
@@ -126,13 +141,21 @@ def main():
                 )
                 return
 
+    allocated_totals, available = calculate_available(total, allocation)
+
+    if any(value < 0 for value in available):
+        print("Error: Allocated resources exceed total resources.")
+        return
+
     need = calculate_need(maximum, allocation)
 
-    print("\nTotal Resources:", total_resources)
+    display_vector("Total Resources", total, resources)
+    display_vector("Allocated Totals", allocated_totals, resources)
+    display_vector("Available Resources", available, resources)
 
     display_matrix("ALLOCATION MATRIX", allocation, processes, resources)
     display_matrix("MAXIMUM CLAIM MATRIX", maximum, processes, resources)
-    display_matrix("NEED MATRIX (Max - Allocation)", need, processes, resources)
+    display_matrix("NEED MATRIX", need, processes, resources)
 
 
 if _name_ == "_main_":
