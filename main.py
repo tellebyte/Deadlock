@@ -1,6 +1,3 @@
-# Banker's Algorithm
-# Main program
-
 def read_positive_integer(prompt):
     while True:
         try:
@@ -34,7 +31,23 @@ def read_resource_vector(prompt, count):
             return values
 
         except ValueError:
-            print("Enter whole numbers separated by spaces.")
+            print("Enter whole numbers separated by spaces or commas.")
+
+
+def read_allocation_matrix(processes, resources):
+    allocation = []
+
+    print("\nEnter the Allocation Matrix.")
+    print("Enter resource amounts in this order:", ", ".join(resources))
+
+    for process in processes:
+        row = read_resource_vector(
+            f"{process} allocation: ",
+            len(resources)
+        )
+        allocation.append(row)
+
+    return allocation
 
 
 def main():
@@ -45,7 +58,6 @@ def main():
     process_count = read_positive_integer(
         "Enter the number of processes: "
     )
-
     resource_count = read_positive_integer(
         "Enter the number of resource types: "
     )
@@ -58,7 +70,6 @@ def main():
         name = input(
             f"Enter name for resource {i + 1} [{default_name}]: "
         ).strip()
-
         resources.append(name or default_name)
 
     print("\nEnter the total amount of each resource.")
@@ -69,11 +80,25 @@ def main():
         resource_count
     )
 
+    allocation = read_allocation_matrix(processes, resources)
+
     print("\nProject Setup")
     print("Processes:", ", ".join(processes))
     print("Resources:", ", ".join(resources))
     print("Total resource vector:", total_resources)
 
+    print("\nAllocation Matrix")
+    print(f"{'Process':<10}", end="")
+    for resource in resources:
+        print(f"{resource:>8}", end="")
+    print()
 
-if _name_ == "_main_":
+    for process, row in zip(processes, allocation):
+        print(f"{process:<10}", end="")
+        for amount in row:
+            print(f"{amount:>8}", end="")
+        print()
+
+
+if __name__ == "__main__":
     main()
