@@ -26,28 +26,46 @@ def read_resource_vector(prompt, count):
 
             if any(value < 0 for value in values):
                 print("Resource amounts cannot be negative.")
-                continue
 
-            return values
+            else:
+                return values
 
         except ValueError:
             print("Enter whole numbers separated by spaces or commas.")
 
 
-def read_allocation_matrix(processes, resources):
-    allocation = []
+def read_matrix(title, processes, resources):
+    matrix = []
 
-    print("\nEnter the Allocation Matrix.")
-    print("Enter resource amounts in this order:", ", ".join(resources))
+    print(f"\nEnter the {title} Matrix.")
+    print("Resource order:", ", ".join(resources))
 
     for process in processes:
         row = read_resource_vector(
-            f"{process} allocation: ",
+            f"{process}: ",
             len(resources)
         )
-        allocation.append(row)
+        matrix.append(row)
 
-    return allocation
+    return matrix
+
+
+def display_matrix(title, matrix, processes, resources):
+    print(f"\n{title}")
+    print(f"{'Process':<10}", end="")
+
+    for resource in resources:
+        print(f"{resource:>8}", end="")
+
+    print()
+
+    for process, row in zip(processes, matrix):
+        print(f"{process:<10}", end="")
+
+        for value in row:
+            print(f"{value:>8}", end="")
+
+        print()
 
 
 def main():
@@ -73,32 +91,39 @@ def main():
         resources.append(name or default_name)
 
     print("\nEnter the total amount of each resource.")
-    print("Resource order:", ", ".join(resources))
-
     total_resources = read_resource_vector(
-        "Total resource vector: ",
+        f"Total vector ({', '.join(resources)}): ",
         resource_count
     )
 
-    allocation = read_allocation_matrix(processes, resources)
+    allocation = read_matrix(
+        "Allocation",
+        processes,
+        resources
+    )
 
-    print("\nProject Setup")
-    print("Processes:", ", ".join(processes))
-    print("Resources:", ", ".join(resources))
-    print("Total resource vector:", total_resources)
+    maximum = read_matrix(
+        "Maximum Claim (Max)",
+        processes,
+        resources
+    )
 
-    print("\nAllocation Matrix")
-    print(f"{'Process':<10}", end="")
-    for resource in resources:
-        print(f"{resource:>8}", end="")
-    print()
+    print("\nTotal Resources:", total_resources)
 
-    for process, row in zip(processes, allocation):
-        print(f"{process:<10}", end="")
-        for amount in row:
-            print(f"{amount:>8}", end="")
-        print()
+    display_matrix(
+        "ALLOCATION MATRIX",
+        allocation,
+        processes,
+        resources
+    )
+
+    display_matrix(
+        "MAXIMUM CLAIM MATRIX",
+        maximum,
+        processes,
+        resources
+    )
 
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     main()
